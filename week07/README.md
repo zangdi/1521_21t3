@@ -1,5 +1,171 @@
 # Week 7 Tute
 
+### 2. Give MIPS directives to represent the following variables:
+### Assume that we are placing the variables in memory, at an appropriately aligned address, and with a label which is the same as the C variable name.
+
+#### a) 
+``` C
+int v0;
+```
+
+```
+v0:
+        .space 4
+```
+
+
+#### b)
+``` C
+int v1 = 42;
+```
+
+```
+v1:
+        .word 42
+```
+
+
+#### c)
+``` C
+char v2;
+```
+
+```
+v2:
+        .space 1
+```
+
+
+#### d)
+``` C
+char v3 = 'a';
+```
+
+```
+v3:
+        .byte 'a'
+```
+
+
+#### e)
+``` C
+double v4;
+```
+
+```
+v4:
+        .space 8
+```
+
+
+#### f)
+``` c
+int v5[20];
+```
+
+```
+v5:
+        .space 80
+```
+
+
+#### g)
+``` C
+int v6[10][5];
+```
+
+```
+v6:
+        .space 200
+```
+
+#### h)
+``` C
+struct { int x; int y; } v7;
+```
+
+```
+v7:
+        .space 8
+```
+
+
+#### i)
+``` C
+struct { int x; int y; } v8[4];
+```
+
+```
+v8:
+        .space 32
+```
+
+
+#### j)
+``` C
+struct { int x; int y; } *v9[4];
+```
+
+```
+v9:
+        .space 16
+```
+
+___
+
+### 3. Translate this C program to MIPS assembler.
+``` C
+int max(int a[], int length) {
+    int first_element = a[0];
+    if (length == 1) {
+        return first_element;
+    } else {
+        // find max value in rest of array
+        int max_so_far = max(&a[1], length - 1);
+        if (first_element > max_so_far) {
+            max_so_far = first_element;
+        }
+
+        return max_so_far;
+    }
+}
+```
+
+MIPS
+```
+        .text
+max:
+max__prologue:
+        addiu   $sp, $sp, -8            # allocate space to store $ra, $s0
+        sw      $ra, 0($sp)             # save $ra onto stack
+        sw      $s0, 4($sp)             # save $s0 onto stack
+
+max__body:
+        lw      $s0, ($a0)              # store first_element in $s0
+
+        beq     $a1, 1, first_element   # if (length == 1) goto first_element;
+
+        addi    $a0, $a0, 4             # store &a[1] in $a0
+        addi    $a1, $a1, -1            # store length - 1 in $a1
+        jal     max                     # max_so_far is stored in $v0
+
+        ble     $s0, $v0, max__epilogue
+
+        move    $v0, $s0                # max_so_far = first_element
+        j       max__epilogue
+
+first_element:
+        move    $v0, $s0                # store first_element in return register
+
+max__epilogue:
+        lw      $s0, 4($sp)             # reloading $s0 from stack
+        lw      $ra, 0($sp)             # reloading $ra from stack
+        addiu   $sp, $sp, 8             # place stack back to before $ra and $s0 was stored
+
+        jr      $ra                     # return
+```
+
+___
 ## MIPS Functions
 ```
 $t0 - $t7 -> can be overwritten during function calls
@@ -138,3 +304,83 @@ sum2__epilogue:
         move    $v0, $t0                # stores x + y in return register
         jr      $ra                     # return x + y
 ```
+
+
+___
+### 5. For each of the following struct definitions, what are the likely offset values for each field, and the total size of the struct:
+### Both the offsets and sizes should be in units of number of bytes.
+
+#### a)
+``` C
+struct _coord {
+    double x;
+    double y;
+};
+```
+
+| field | offset | size |
+|:---:|:---:|:---:|
+| x | 0 | 8 |
+| y | 8 | 8 |
+
+Total: 8 + 8 = 16
+
+#### b)
+``` C
+typedef struct _node Node;
+struct _node {
+    int value;
+    Node *next;
+};
+```
+
+| field | offset | size |
+|:---:|:---:|:---:|
+| value | 0 | 4 |
+| next | 4 | 4 |
+
+Total: 4 + 4 = 8
+
+
+#### c)
+``` C
+struct _enrolment {
+    int stu_id;         // e.g. 5012345
+    char course[9];     // e.g. "COMP1521"
+    char term[5];       // e.g. "17s2"
+    char grade[3];      // e.g. "HD"
+    double mark;        // e.g. 87.3
+};
+```
+
+| field | offset | size |
+|:---:|:---:|:---:|
+| stu_id | 0 | 4 |
+| course | 4 | 9 |
+| term | 13 | 5 |
+| grade | 18 | 3 |
+| (padding) | 21 | 3 |
+| mark | 24 | 8 |
+
+Total: 4 + 9 + 5 + 3 + 3 + 8 = 32
+
+
+#### d)
+``` C
+struct _queue {
+    int nitems;     // # items currently in queue
+    int head;       // index of oldest item added
+    int tail;       // index of most recent item added
+    int maxitems;   // size of array
+    Item *items;    // malloc'd array of Items
+};
+```
+| field | offset | size |
+|:---:|:---:|:---:|
+| nitem | 0 | 4 |
+| head | 4 | 4 |
+| tail | 8 | 4 |
+| maxitems | 12 | 4 |
+| items | 16 | 4 |
+
+Total: 4 + 4 + 4 + 4 + 4 = 20
